@@ -1,0 +1,25 @@
+Source: voice-prompt-cleanup
+Section: sound
+Priority: optional
+Maintainer: Daniel Rosehill <public@danielrosehill.com>
+Build-Depends: debhelper-compat (= 13), dh-python, python3-all
+Standards-Version: 4.6.0
+Homepage: https://github.com/danielrosehill/Voice-Prompt-Cleanup-Script
+Rules-Requires-Root: no
+
+Package: voice-prompt-cleanup
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-pyqt6, ffmpeg
+Description: Audio preprocessing GUI for speech-to-text workflows
+ Voice Prompt Cleanup is a GUI application that processes audio files
+ to optimize them for speech-to-text (STT) workflows. It applies:
+ .
+  - Mono conversion and downsampling to 16kHz
+  - Speech EQ (80Hz-8kHz bandpass filter)
+  - Gentle compression for even dynamics
+  - Silence truncation
+  - Audio normalization
+  - MP3 encoding
+ .
+ Features include batch processing, drag-and-drop support, and
+ persistent output folder settings.

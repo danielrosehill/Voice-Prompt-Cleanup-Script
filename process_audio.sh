@@ -4,11 +4,12 @@
 # Processes audio files for optimal speech-to-text intake
 #
 # Operations:
-#   1. Convert to mono
-#   2. Downsample to 16kHz
-#   3. Truncate silences
-#   4. Normalize audio levels
-#   5. Export as compressed MP3
+#   1. Convert to mono and downsample to 16kHz
+#   2. Apply speech EQ (highpass/lowpass filter for voice frequencies)
+#   3. Apply gentle compression (even out dynamics)
+#   4. Truncate silences
+#   5. Normalize audio levels
+#   6. Export as compressed MP3
 #
 
 set -e
@@ -16,17 +17,32 @@ set -e
 # Configuration
 SAMPLE_RATE=16000
 AUDIO_BITRATE="64k"
-SILENCE_THRESHOLD="-50dB"
-SILENCE_DURATION="0.5"
-MIN_SILENCE_DURATION="0.1"
+
+# Silence truncation settings (similar to Audacity's Truncate Silence)
+SILENCE_THRESHOLD="-40dB"      # Audio below this is considered silence
+SILENCE_MIN_DURATION="0.3"     # Silences shorter than this are kept as-is
+
+# Speech EQ settings - bandpass filter for human voice
+# Human speech fundamentals: ~85Hz (male) to ~255Hz (female)
+# Important harmonics and consonants extend to ~3.5kHz
+# Cutting below 80Hz removes rumble, cutting above 8kHz removes hiss
+HIGHPASS_FREQ=80               # Remove rumble/low noise below this
+LOWPASS_FREQ=8000              # Remove hiss/high noise above this
+
+# Compression settings - even out speech dynamics
+COMPRESSOR_THRESHOLD="-20dB"   # Start compressing above this level
+COMPRESSOR_RATIO="3"           # 3:1 ratio (gentle, suitable for speech)
+COMPRESSOR_ATTACK="5"          # 5ms attack (catch transients)
+COMPRESSOR_RELEASE="100"       # 100ms release (natural decay)
 
 usage() {
     echo "Usage: $0 <input_file> [output_file]"
     echo ""
     echo "Processes audio for speech-to-text workflows:"
-    echo "  - Converts to mono"
-    echo "  - Downsamples to 16kHz"
-    echo "  - Removes long silences"
+    echo "  - Converts to mono and downsamples to 16kHz"
+    echo "  - Applies speech EQ (80Hz-8kHz bandpass)"
+    echo "  - Applies gentle compression"
+    echo "  - Truncates long silences"
     echo "  - Normalizes audio levels"
     echo "  - Exports as MP3"
     echo ""
@@ -62,36 +78,59 @@ process_audio() {
 
     get_audio_info "$input"
 
-    echo "Step 1/4: Converting to mono and resampling to ${SAMPLE_RATE}Hz..."
+    echo "Step 1/6: Converting to mono and resampling to ${SAMPLE_RATE}Hz..."
     ffmpeg -y -i "$input" \
         -ac 1 \
         -ar "$SAMPLE_RATE" \
         -f wav \
         "$temp_file" \
-        -loglevel warning
+        -loglevel error
 
-    echo "Step 2/4: Removing silences..."
-    local temp_nosilence=$(mktemp --suffix=.wav)
+    echo "Step 2/6: Applying speech EQ (${HIGHPASS_FREQ}Hz - ${LOWPASS_FREQ}Hz bandpass)..."
+    local temp_eq=$(mktemp --suffix=.wav)
+    # Bandpass filter: remove rumble below 80Hz and hiss above 8kHz
+    # These frequencies don't contribute to speech intelligibility
     ffmpeg -y -i "$temp_file" \
-        -af "silenceremove=start_periods=1:start_duration=${MIN_SILENCE_DURATION}:start_threshold=${SILENCE_THRESHOLD}:detection=peak,silenceremove=stop_periods=-1:stop_duration=${SILENCE_DURATION}:stop_threshold=${SILENCE_THRESHOLD}:detection=peak" \
+        -af "highpass=f=${HIGHPASS_FREQ},lowpass=f=${LOWPASS_FREQ}" \
+        "$temp_eq" \
+        -loglevel error
+    mv "$temp_eq" "$temp_file"
+
+    echo "Step 3/6: Applying compression..."
+    local temp_compressed=$(mktemp --suffix=.wav)
+    # Gentle compression to even out speech dynamics
+    # Makes quiet parts more audible without clipping loud parts
+    ffmpeg -y -i "$temp_file" \
+        -af "acompressor=threshold=${COMPRESSOR_THRESHOLD}:ratio=${COMPRESSOR_RATIO}:attack=${COMPRESSOR_ATTACK}:release=${COMPRESSOR_RELEASE}" \
+        "$temp_compressed" \
+        -loglevel error
+    mv "$temp_compressed" "$temp_file"
+
+    echo "Step 4/6: Truncating silences..."
+    local temp_nosilence=$(mktemp --suffix=.wav)
+    # silenceremove: Detect silences longer than SILENCE_MIN_DURATION and truncate them
+    # This mimics Audacity's "Truncate Silence" effect
+    ffmpeg -y -i "$temp_file" \
+        -af "silenceremove=stop_periods=-1:stop_duration=${SILENCE_MIN_DURATION}:stop_threshold=${SILENCE_THRESHOLD}:window=0.02" \
         "$temp_nosilence" \
-        -loglevel warning
+        -loglevel error
     mv "$temp_nosilence" "$temp_file"
 
-    echo "Step 3/4: Normalizing audio levels..."
+    echo "Step 5/6: Normalizing audio levels..."
     local temp_normalized=$(mktemp --suffix=.wav)
     ffmpeg -y -i "$temp_file" \
         -af "loudnorm=I=-16:LRA=11:TP=-1.5" \
         "$temp_normalized" \
-        -loglevel warning
+        -loglevel error
     mv "$temp_normalized" "$temp_file"
 
-    echo "Step 4/4: Encoding to MP3..."
+    echo "Step 6/6: Encoding to MP3..."
     ffmpeg -y -i "$temp_file" \
         -codec:a libmp3lame \
+        -ar "$SAMPLE_RATE" \
         -b:a "$AUDIO_BITRATE" \
         "$output" \
-        -loglevel warning
+        -loglevel error
 
     rm -f "$temp_file"
 

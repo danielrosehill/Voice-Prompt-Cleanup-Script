@@ -1,0 +1,26 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python3
+
+override_dh_auto_install:
+	# Install the processing script
+	install -D -m 755 process_audio.sh $(CURDIR)/debian/voice-prompt-cleanup/usr/share/voice-prompt-cleanup/process_audio.sh
+
+	# Install the GUI application
+	install -D -m 755 voice_prompt_cleanup_gui.py $(CURDIR)/debian/voice-prompt-cleanup/usr/share/voice-prompt-cleanup/voice_prompt_cleanup_gui.py
+
+	# Install the launcher script
+	install -D -m 755 debian/voice-prompt-cleanup.sh $(CURDIR)/debian/voice-prompt-cleanup/usr/bin/voice-prompt-cleanup
+
+	# Install desktop file
+	install -D -m 644 debian/voice-prompt-cleanup.desktop $(CURDIR)/debian/voice-prompt-cleanup/usr/share/applications/voice-prompt-cleanup.desktop
+
+	# Install icon
+	install -D -m 644 debian/voice-prompt-cleanup.svg $(CURDIR)/debian/voice-prompt-cleanup/usr/share/icons/hicolor/scalable/apps/voice-prompt-cleanup.svg
+
+override_dh_auto_build:
+	# No build step needed
+
+override_dh_auto_test:
+	# Skip tests during package build

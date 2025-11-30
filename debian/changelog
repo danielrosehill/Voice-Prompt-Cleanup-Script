@@ -1,0 +1,9 @@
+voice-prompt-cleanup (1.0.0-1) unstable; urgency=medium
+
+  * Initial release
+  * PyQt6 GUI with drag-and-drop support
+  * Batch processing for files and folders
+  * Persistent output folder settings
+  * Audio processing: mono, 16kHz, EQ, compression, silence removal, normalization
+
+ -- Daniel Rosehill <public@danielrosehill.com>  Sat, 30 Nov 2024 12:00:00 +0200

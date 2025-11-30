@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#4a90d9"/>
+
+  <!-- Microphone body -->
+  <rect x="26" y="12" width="12" height="24" rx="6" fill="#ffffff"/>
+
+  <!-- Microphone stand -->
+  <path d="M32 36 L32 48" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M24 48 L40 48" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Microphone arc -->
+  <path d="M20 28 Q20 42 32 42 Q44 42 44 28" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Audio wave lines (representing processing) -->
+  <path d="M8 28 Q10 24 12 28 Q14 32 16 28" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.7"/>
+  <path d="M48 28 Q50 24 52 28 Q54 32 56 28" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.7"/>
+
+  <!-- Checkmark (representing cleanup/done) -->
+  <circle cx="50" cy="50" r="10" fill="#4caf50"/>
+  <path d="M45 50 L48 53 L55 46" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

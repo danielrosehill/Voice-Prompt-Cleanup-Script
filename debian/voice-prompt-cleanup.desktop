@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Voice Prompt Cleanup
+Comment=Process audio files for speech-to-text workflows
+Exec=voice-prompt-cleanup
+Icon=voice-prompt-cleanup
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Utility;
+Keywords=audio;voice;speech;transcription;stt;cleanup;processing;
+MimeType=audio/mpeg;audio/wav;audio/flac;audio/ogg;audio/mp4;audio/aac;
